@@ -3,14 +3,14 @@
 Written by [Conrad Shyu](mailto:conradshyu@hotmail.com)<br>
 *release 1, October 1, 2009*<br>
 *release 2, March 11, 2014*<br>
-*last updated on July 5, 2020*
+*last updated on October 30, 2026*
 
 ## Synopsis
 
-This archive contains the implementation of polynomial regression for estimates of free energy differences using
-thermodynamic integration. It also contains an example data file to jumpstart use of the software. The
-implementation makes heavy use of STL (standard template library) which requires a C++ compiler. This program is
-self-contained and should not require any additional libraries.
+This project contains a C++ program that fits a polynomial to thermodynamic integration data and estimates the
+free energy difference by integrating the fitted polynomial. It also reports a trapezoidal-rule estimate and
+includes an example data file. The implementation uses the C++ Standard Library and requires a C++ compiler; no
+additional libraries are required.
 
 To compile the program, simply type:
 
@@ -21,7 +21,7 @@ manually, issue the command:
 
 `g++ -I. driver.cpp regress.cpp -o regress -lm`
 
-The archive lists three implementation files and an example file.
+The project files are:
 
 | Filename | Description |
 | --- | --- |
@@ -30,11 +30,12 @@ The archive lists three implementation files and an example file.
 | `regress.h` | the header file for polynomial regression |
 | `example.csv` | example file of simulations data from thermodynamic integration |
 | `Makefile` | the makefile to compile the source code |
+| `.gitignore` | ignores compiler outputs and intermediate files |
+| `LICENSE` | GNU General Public License, version 3 or later |
 | `README.md` | this file |
 
-The purpose of this program is to construct a regression model that optimally fits the thermodynamic integration
-data. The implementation also contains an estimate function that allows the interpolating polynomial be used to
-extrapolate points. This feature may be useful to determine the accuracy of the regression model.
+The program fits the data by linear least squares using powers of the lambda values. Its estimate function writes
+values of the fitted polynomial for plotting.
 
 The polynomial regression program takes four command-line parameters: `input_file`, `degree` (optional),
 `plot_file` (optional), and `data_points` (optional). Only one parameter, the input file, is required to run the
@@ -42,8 +43,9 @@ software. The followings detail the format and meaning of each command-line para
 
 ## `input_file`
 
-The input file must be saved in the plain text format. The first column contains the lambda values and second the
-ensemble averages from the simulations. Each column of data must be separated by either a comma or a white space.
+The input file must be plain text, with one data row per line. The first column contains lambda values and the
+second contains the corresponding ensemble averages (dG/dlambda) from the simulations. Separate the columns with
+a comma, semicolon, or whitespace. Lines whose first character is `#` are ignored.
 For example, the followings list the contents of the example input file:
 
 ```
@@ -64,8 +66,8 @@ To run the analysis program with the required parameter, type:
 
 `regress example.csv`
 
-The program will output the interpolating polynomial and the estimate of free energy using the Lagrange
-interpolating polynomial and trapezoidal rule. For example, the example file should generate the following output:
+The program prints the fitted polynomial coefficients and estimates the free energy difference by integrating that
+polynomial and by the trapezoidal rule. For example, the example file should generate the following output:
 
 ```
 Degree, Coefficients
@@ -82,28 +84,27 @@ Degree, Coefficients
     10,   42443.03080908
 
 Free energy difference
- Lagrange: 0.65644834
+Regression: 0.65644834
 Trapezoid: 1.02220063
 ```
 
 ## `degree`
 
-This parameter specifies the degree of polynomial for the regression model. This parameter is optional. If this
-parameter is not specified, the program will determine the degree of polynomial based on the number of data
-points, up to the degree of ten. For example, to run the analysis with a polynomial of degree eight, type
+This parameter specifies the degree of polynomial for the regression model. This parameter is optional. If omitted,
+the program uses the smaller of the number of input rows minus one and 10. Explicit degrees above 10 are also
+capped at 10. For example, to run the analysis with a polynomial of degree eight, type
 
 `regress example.csv 8`
 
-Alternatively, to run the analysis with the maximum degree of polynomial, type
+Alternatively, to use the default degree, type
 
 `regress example.csv`
 
 ## `plot_file`
 
-This parameter specifies the name of the file that contains the estimates obtained from the interpolating
-polynomial. This parameter is optional. If this parameter is not given, no plot data will be generated by the
-program. For example, to generate a file of plot data with the default number of data points extrapolated from the
-interpolating polynomial, issue the command:
+This parameter specifies the name of the file that contains estimates from the fitted polynomial. This parameter is
+optional. If it is omitted, no plot data will be generated. The output covers lambda values from 0 to 1, regardless
+of the range of lambda values in the input file. For example, to generate plot data, issue the command:
 
 `regress example.csv 10 plot.csv`
 
@@ -114,9 +115,10 @@ interpolating polynomial.
 
 ## `data_points`
 
-This parameter specifies the number of data points extrapolated from the polynomial. This parameter is optional.
-If this parameter is not given, the number of data points will be the same as the input file. For example, to
-generate a file of plot data with 100 data points extrapolated from the polynomial, issue the command:
+This parameter sets the number of equal intervals between lambda 0 and 1 in the plot output. It is optional; when
+omitted, the number of intervals is one less than the number of input rows, so the output has the same number of
+rows as the input. The output includes both endpoints, so a value of 100 produces 101 rows. For example, to
+generate a file of plot data with 100 intervals, issue the command:
 
 `regress example.csv 10 plot.csv 100`
 
